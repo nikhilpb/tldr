@@ -1,0 +1,41 @@
+-- Initial database schema for News Aggregator
+
+CREATE TABLE sources (
+    id SERIAL PRIMARY KEY,
+    url VARCHAR(512) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'rss' or 'website'
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_fetched_at TIMESTAMP,
+    fetch_error_count INTEGER DEFAULT 0
+);
+
+CREATE TABLE articles (
+    id SERIAL PRIMARY KEY,
+    source_id INTEGER REFERENCES sources(id) ON DELETE CASCADE,
+    title VARCHAR(512) NOT NULL,
+    url VARCHAR(512) NOT NULL UNIQUE,
+    author VARCHAR(255),
+    published_at TIMESTAMP,
+    summary TEXT,
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Full-text search index
+    search_vector tsvector GENERATED ALWAYS AS (
+        to_tsvector('english', title || ' ' || COALESCE(summary, '') || ' ' || COALESCE(content, ''))
+    ) STORED
+);
+
+-- Indexes for performance
+CREATE INDEX idx_articles_published_at ON articles(published_at DESC);
+CREATE INDEX idx_articles_source_id ON articles(source_id);
+CREATE INDEX idx_articles_search ON articles USING GIN(search_vector);
+CREATE INDEX idx_sources_is_active ON sources(is_active);
+
+-- Insert some sample data for development
+INSERT INTO sources (url, name, type) VALUES 
+('https://feeds.feedburner.com/oreilly/radar/feed', 'O''Reilly Radar', 'rss'),
+('https://www.theverge.com/rss/index.xml', 'The Verge', 'rss');

@@ -366,15 +366,10 @@ GET    /api/health               # Health check
 ## Performance Considerations
 
 ### Caching Strategy:
-- Redis for API response caching (optional)
-- Database query optimization
-- CDN for static assets (GCP Cloud CDN)
+Out of scope for v1
 
 ### Scaling Approach:
-- Horizontal scaling of Cloud Run services
-- Database connection pooling
-- Async processing for content fetching
-- Pagination for large article lists
+Out of scope for v1
 
 ## Development Workflow
 
@@ -385,62 +380,9 @@ GET    /api/health               # Health check
 4. Hot reloading for development
 
 ### CI/CD Pipeline (GitHub Actions + GCP):
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy to GCP
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
-      - name: Build and Deploy
-        run: |
-          gcloud builds submit --tag gcr.io/$PROJECT_ID/news-aggregator
-          gcloud run deploy --image gcr.io/$PROJECT_ID/news-aggregator
-```
+
+TODO
 
 ## Monitoring and Observability
 
-### GCP Native Solutions:
-- **Logging**: Cloud Logging for application logs
-- **Monitoring**: Cloud Monitoring for metrics
-- **Alerting**: Cloud Monitoring alerts for service health
-- **Tracing**: Cloud Trace for request tracing
-
-### Key Metrics to Monitor:
-- API response times and error rates
-- Content fetch success/failure rates
-- Database performance
-- Storage usage
-- Memory and CPU utilization
-
-## Cost Estimation (GCP)
-
-### Development Environment:
-- Cloud Run: ~$0 (free tier)
-- Cloud SQL (small instance): ~$10/month
-- Cloud Storage: ~$1/month
-- **Total: ~$11/month**
-
-### Production Environment:
-- Cloud Run: ~$20-50/month (depending on usage)
-- Cloud SQL (production instance): ~$50-100/month
-- Cloud Storage: ~$5/month
-- Load Balancer: ~$20/month
-- **Total: ~$95-175/month**
-
-## Next Steps
-
-1. **Phase 1**: Set up development environment with Docker
-2. **Phase 2**: Implement core backend API with FastAPI
-3. **Phase 3**: Build content fetcher service
-4. **Phase 4**: Develop frontend application
-5. **Phase 5**: Deploy to GCP Cloud Run
-6. **Phase 6**: Set up monitoring and CI/CD
-
-This design provides a solid foundation for the v1 news aggregator while maintaining flexibility for future enhancements and scaling. 
+TODO

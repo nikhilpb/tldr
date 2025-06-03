@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://newsuser:newspass@db:5432/newsdb
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+
+  fetcher:
+    build:
+      context: ./fetcher
+      dockerfile: ../docker/Dockerfile.fetcher
+    environment:
+      - DATABASE_URL=postgresql://newsuser:newspass@db:5432/newsdb
+    depends_on:
+      - db
+      - backend
+    volumes:
+      - ./fetcher:/app
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: newsuser
+      POSTGRES_PASSWORD: newspass
+      POSTGRES_DB: newsdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
