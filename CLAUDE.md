@@ -116,11 +116,60 @@ Recent design updates emphasize:
 - **CI/CD Pipeline**: To be determined
 - **Monitoring**: To be determined
 
+## Current Code Structure
+
+The project has been initialized with the following directory structure:
+
+```
+/Users/nikhilbhat/git/tldr/
+├── CLAUDE.local.md           # Local Claude configuration
+├── CLAUDE.md                 # This file - Claude guidance
+├── DESIGN.md                 # Engineering design document
+├── PRD.md                    # Product Requirements Document
+├── README.md                 # Project README
+├── backend/                  # Backend service (Python + FastAPI)
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── api/
+│   │   │   └── v1/          # API version 1 endpoints
+│   │   ├── core/
+│   │   │   └── config.py    # Configuration management
+│   │   ├── db/              # Database layer
+│   │   ├── main.py          # FastAPI application entry point
+│   │   └── models/          # SQLAlchemy models
+│   ├── requirements.txt     # Python dependencies
+│   └── tests/               # Backend tests
+├── database/
+│   └── init.sql             # Database initialization scripts
+├── docker-compose.yml       # Multi-service development setup
+├── docker/                  # Docker configurations
+│   ├── Dockerfile.backend   # Backend service container
+│   ├── Dockerfile.fetcher   # Content fetcher service container
+│   ├── Dockerfile.frontend  # Frontend service container
+│   └── nginx.conf           # Nginx configuration
+├── fetcher/                 # Content fetcher service
+│   ├── app/
+│   │   └── __init__.py
+│   ├── requirements.txt     # Python dependencies for fetcher
+│   └── tests/               # Fetcher tests
+└── frontend/                # Frontend application (React + TypeScript)
+    ├── package.json         # Node.js dependencies and scripts
+    ├── public/              # Static assets
+    ├── src/
+    │   ├── components/      # React components
+    │   ├── hooks/           # Custom React hooks
+    │   ├── pages/           # Page components
+    │   ├── services/        # API service layer
+    │   └── types/           # TypeScript type definitions
+    ├── tsconfig.json        # TypeScript configuration
+    └── vite.config.ts       # Vite build configuration
+```
+
 ## When Starting Implementation
 
-Since this is a planning-phase project, when beginning implementation:
-1. Create appropriate directory structure (`backend/`, `frontend/`, `fetcher/`, `docker/`)
-2. Initialize package management files (`requirements.txt`, `package.json`)
+Since the basic structure is now in place, when beginning implementation:
+1. Follow the established directory structure
+2. Initialize package management files with dependencies from `DESIGN.md`
 3. Set up Docker Compose for local development with multi-stage Dockerfiles
 4. Follow the technology recommendations and data models in `DESIGN.md`
 5. Implement the phased approach, focusing on core functionality first
