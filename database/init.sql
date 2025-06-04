@@ -21,18 +21,12 @@ CREATE TABLE articles (
     published_at TIMESTAMP,
     summary TEXT,
     content TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Full-text search index
-    search_vector tsvector GENERATED ALWAYS AS (
-        to_tsvector('english', title || ' ' || COALESCE(summary, '') || ' ' || COALESCE(content, ''))
-    ) STORED
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for performance
 CREATE INDEX idx_articles_published_at ON articles(published_at DESC);
 CREATE INDEX idx_articles_source_id ON articles(source_id);
-CREATE INDEX idx_articles_search ON articles USING GIN(search_vector);
 CREATE INDEX idx_sources_is_active ON sources(is_active);
 
 -- Insert some sample data for development

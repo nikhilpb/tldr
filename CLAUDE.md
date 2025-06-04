@@ -174,3 +174,13 @@ Since the basic structure is now in place, when beginning implementation:
 4. Follow the technology recommendations and data models in `DESIGN.md`
 5. Implement the phased approach, focusing on core functionality first
 6. Use the provided SQL schemas for PostgreSQL with full-text search capabilities
+
+## Workflow Recommendations
+
+- use gh command line when appropriate
+- when (think) is prefixed. Think hard about the task and ask questions.
+- Following new code changes add them to a git branch by claude. When asked, create a PR.
+
+## Coding Best Practices
+
+- Write unit tests any time new functionality is added. Make sure the unit tests pass on code changes.
