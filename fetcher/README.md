@@ -191,7 +191,7 @@ docker run -e DATABASE_URL=postgresql://... news-fetcher
 
 ### Phase 1: Core Infrastructure
 - [x] **Set up database models, configuration, and connection management** ✅
-  - ✅ Database models: `Source`, `Article`, `FetchLog` with full relationships
+  - ✅ Database models: `Source`, `Article` aligned with V1 schema (`/database/init.sql`)
   - ✅ Configuration management with Pydantic settings and environment variables
   - ✅ Database connection handling for SQLite (dev) and PostgreSQL (prod)
   - ✅ Session management with proper error handling and cleanup
@@ -222,9 +222,8 @@ The foundation layer has been implemented with the following components:
 - **Article Model**: Stores fetched news articles with metadata
   - Deduplication by URL, flexible content storage
   - Methods: `exists_by_url()`, `create_from_dict()`
-- **FetchLog Model**: Tracks fetch operations for monitoring
-  - Performance metrics, error logging, duration tracking
-  - Methods: `mark_completed()`
+
+*Note: Simplified V1 schema aligns with `/database/init.sql` - monitoring via `sources` table fields*
 
 #### Configuration Management (`app/config.py`)
 - Pydantic-based settings with environment variable support
@@ -245,7 +244,7 @@ The foundation layer has been implemented with the following components:
 - Service status monitoring
 
 #### Testing (`tests/`)
-- **22 unit tests** covering all components with 100% pass rate
+- **18 unit tests** covering all components with 100% pass rate
 - Database models, configuration validation, session management
 - Mock-based testing for database operations
 - Test database isolation using in-memory SQLite

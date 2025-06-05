@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base
-from app.models import Source, Article, FetchLog
+from app.models import Source, Article
 
 
 @pytest.fixture
@@ -196,54 +196,3 @@ class TestArticleModel:
         assert article.source_id == 1
 
 
-class TestFetchLogModel:
-    """Tests for the FetchLog model."""
-    
-    def test_create_fetch_log(self, test_db_session):
-        """Test creating a new fetch log."""
-        # First create a source
-        source = Source(
-            url="https://example.com/rss.xml",
-            name="Example RSS Feed",
-            type="rss"
-        )
-        test_db_session.add(source)
-        test_db_session.commit()
-        
-        # Create fetch log
-        fetch_log = FetchLog(
-            source_id=source.id,
-            status="success"
-        )
-        
-        test_db_session.add(fetch_log)
-        test_db_session.commit()
-        
-        assert fetch_log.id is not None
-        assert fetch_log.source_id == source.id
-        assert fetch_log.status == "success"
-        assert fetch_log.started_at is not None
-        assert fetch_log.articles_found == 0
-        assert fetch_log.articles_new == 0
-    
-    def test_mark_completed(self, test_db_session):
-        """Test marking fetch log as completed."""
-        fetch_log = FetchLog(
-            source_id=1,
-            status="running"
-        )
-        
-        test_db_session.add(fetch_log)
-        test_db_session.commit()
-        
-        fetch_log.mark_completed(
-            status="success",
-            articles_found=10,
-            articles_new=3
-        )
-        
-        assert fetch_log.status == "success"
-        assert fetch_log.articles_found == 10
-        assert fetch_log.articles_new == 3
-        assert fetch_log.completed_at is not None
-        assert fetch_log.duration_seconds is not None
