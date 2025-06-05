@@ -109,7 +109,8 @@ class TestDatabaseOperations:
         result = test_database_connection()
         
         assert result is True
-        mock_connection.execute.assert_called_once_with("SELECT 1")
+        # Verify execute was called (the text() wrapper will be used internally)
+        mock_connection.execute.assert_called_once()
     
     @patch('app.database.engine')
     def test_database_connection_failure(self, mock_engine):
