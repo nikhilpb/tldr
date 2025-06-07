@@ -6,8 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.database import Base
-from app.models import Source, Article
+from app.fetcher.database import Base
+from app.fetcher.models import Source, Article
 
 
 @pytest.fixture
@@ -194,5 +194,3 @@ class TestArticleModel:
         assert article.summary == "Dict summary"
         assert article.content == "Dict content"
         assert article.source_id == 1
-
-
