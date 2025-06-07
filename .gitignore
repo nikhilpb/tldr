@@ -1,1 +1,7 @@
 .claude
+
+# Python binary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
