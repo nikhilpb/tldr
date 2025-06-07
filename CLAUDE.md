@@ -54,18 +54,27 @@ Frontend (Web App) ↔ Backend API Service ↔ Content Fetcher Service
 4. **Scheduler**: Hourly content refresh and cleanup (1-year retention)
 5. **Database**: Article and source storage with full-text search
 
-## Development Workflow (When Implementation Begins)
+## Development Workflow
 
 ### Local Setup:
 ```bash
+# Create and activate conda environment
+conda create -n tldr-backend python=3.11 -y
+source /opt/miniconda3/bin/activate tldr-backend
+
+# Install dependencies
+cd backend
+pip install -r requirements.txt
+
 # Development environment
 docker-compose up
 
 # Database migrations (when implemented)
 alembic upgrade head
 
-# Run tests (when implemented)
-pytest
+# Run tests
+source /opt/miniconda3/bin/activate tldr-backend
+python -m pytest tests/fetcher/ -v
 
 # Linting (when implemented)
 flake8 .
@@ -118,7 +127,7 @@ Recent design updates emphasize:
 
 ## Current Code Structure
 
-The project has been initialized with the following directory structure:
+The project has been implemented with the following directory structure:
 
 ```
 /Users/nikhilbhat/git/tldr/
@@ -127,7 +136,7 @@ The project has been initialized with the following directory structure:
 ├── DESIGN.md                 # Engineering design document
 ├── PRD.md                    # Product Requirements Document
 ├── README.md                 # Project README
-├── backend/                  # Backend service (Python + FastAPI)
+├── backend/                  # Backend service (Python + FastAPI) with integrated fetcher
 │   ├── app/
 │   │   ├── __init__.py
 │   │   ├── api/
@@ -135,23 +144,25 @@ The project has been initialized with the following directory structure:
 │   │   ├── core/
 │   │   │   └── config.py    # Configuration management
 │   │   ├── db/              # Database layer
+│   │   ├── fetcher/         # Content fetcher service (consolidated)
+│   │   │   ├── __init__.py  # Fetcher module exports
+│   │   │   ├── config.py    # Fetcher configuration
+│   │   │   ├── database.py  # Database connection management
+│   │   │   ├── main.py      # Fetcher CLI entry point
+│   │   │   └── models.py    # Shared database models (Source, Article)
 │   │   ├── main.py          # FastAPI application entry point
-│   │   └── models/          # SQLAlchemy models
-│   ├── requirements.txt     # Python dependencies
+│   │   └── models/          # Pydantic models
+│   ├── requirements.txt     # Python dependencies (merged fetcher + backend)
 │   └── tests/               # Backend tests
+│       └── fetcher/         # Fetcher tests (moved from separate directory)
 ├── database/
 │   └── init.sql             # Database initialization scripts
-├── docker-compose.yml       # Multi-service development setup
+├── docker-compose.yml       # Multi-service development setup (fetcher removed)
 ├── docker/                  # Docker configurations
 │   ├── Dockerfile.backend   # Backend service container
-│   ├── Dockerfile.fetcher   # Content fetcher service container
+│   ├── Dockerfile.fetcher   # Content fetcher service container (updated)
 │   ├── Dockerfile.frontend  # Frontend service container
 │   └── nginx.conf           # Nginx configuration
-├── fetcher/                 # Content fetcher service
-│   ├── app/
-│   │   └── __init__.py
-│   ├── requirements.txt     # Python dependencies for fetcher
-│   └── tests/               # Fetcher tests
 └── frontend/                # Frontend application (React + TypeScript)
     ├── package.json         # Node.js dependencies and scripts
     ├── public/              # Static assets
@@ -180,7 +191,32 @@ Since the basic structure is now in place, when beginning implementation:
 - use gh command line when appropriate
 - when (think) is prefixed. Think hard about the task and ask questions.
 - Following new code changes add them to a git branch by claude. When asked, create a PR.
+- Maintain implementation status in the section "Implementation status" in this file. Update the status or edit as the implementation is done.
 
 ## Coding Best Practices
 
 - Write unit tests any time new functionality is added. Make sure the unit tests pass on code changes.
+
+## Implementation Status
+
+### Fecther
+
+#### Phase 1: Core Infrastructure
+- [x] **Set up database models, configuration, and connection management** ✅
+  - ✅ Database models: `Source`, `Article` aligned with V1 schema (`/database/init.sql`)
+  - ✅ Configuration management with Pydantic settings and environment variables
+  - ✅ Database connection handling for SQLite (dev) and PostgreSQL (prod)
+  - ✅ Session management with proper error handling and cleanup
+  - ✅ Unit tests with 100% coverage for models, config, and database layers
+  - ✅ CLI interface for database initialization and health checks
+- [ ] Implement RSS feed fetcher with feedparser integration and unit tests
+- [ ] Create website scraper with BeautifulSoup for content extraction and unit tests
+
+#### Phase 2: Service Features  
+- [ ] Add error handling, retry logic, and rate limiting utilities with unit tests
+- [ ] Build core fetcher service with concurrent processing and unit tests
+- [ ] Create health check API and CLI interface with unit tests
+
+#### Phase 3: Integration & Deployment
+- [ ] Add integration tests for end-to-end workflows
+- [ ] Implement monitoring, logging, and production deployment

@@ -4,7 +4,7 @@ import pytest
 import os
 from pydantic import ValidationError
 
-from app.config import Settings
+from app.fetcher.config import Settings
 
 
 class TestSettings:

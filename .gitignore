@@ -1,1 +1,10 @@
 .claude
+
+# Python binary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database files
+*.db

@@ -114,4 +114,3 @@ class Article(Base):
             content=article_data.get("content")
         )
 
-

@@ -39,23 +39,28 @@ A web application that aggregates news from various sources including RSS feeds 
    npm run dev
    ```
 
-3. **Fetcher service:**
+3. **Fetcher service (now part of backend):**
    ```bash
-   cd fetcher
-   pip install -r requirements.txt
-   python app/main.py
+   cd backend
+   python -m app.fetcher.main --help
    ```
 
 ### Project Structure
 
 ```
-├── backend/           # FastAPI backend service
+├── backend/           # FastAPI backend service with integrated fetcher
 │   ├── app/
 │   │   ├── api/       # API endpoints
 │   │   ├── core/      # Configuration and utilities
 │   │   ├── db/        # Database models and connections
+│   │   ├── fetcher/   # Content fetching service
+│   │   │   ├── config.py    # Fetcher configuration
+│   │   │   ├── database.py  # Database connection
+│   │   │   ├── main.py      # CLI entry point
+│   │   │   └── models.py    # Shared database models
 │   │   └── models/    # Pydantic models
 │   └── tests/
+│       └── fetcher/   # Fetcher tests
 ├── frontend/          # React TypeScript frontend
 │   ├── src/
 │   │   ├── components/
@@ -64,9 +69,6 @@ A web application that aggregates news from various sources including RSS feeds 
 │   │   ├── services/
 │   │   └── types/
 │   └── public/
-├── fetcher/           # Content fetching service
-│   ├── app/
-│   └── tests/
 ├── docker/            # Docker configuration files
 ├── database/          # Database schemas and migrations
 └── docker-compose.yml # Multi-service orchestration
