@@ -191,7 +191,32 @@ Since the basic structure is now in place, when beginning implementation:
 - use gh command line when appropriate
 - when (think) is prefixed. Think hard about the task and ask questions.
 - Following new code changes add them to a git branch by claude. When asked, create a PR.
+- Maintain implementation status in the section "Implementation status" in this file. Update the status or edit as the implementation is done.
 
 ## Coding Best Practices
 
 - Write unit tests any time new functionality is added. Make sure the unit tests pass on code changes.
+
+## Implementation Status
+
+### Fecther
+
+#### Phase 1: Core Infrastructure
+- [x] **Set up database models, configuration, and connection management** ✅
+  - ✅ Database models: `Source`, `Article` aligned with V1 schema (`/database/init.sql`)
+  - ✅ Configuration management with Pydantic settings and environment variables
+  - ✅ Database connection handling for SQLite (dev) and PostgreSQL (prod)
+  - ✅ Session management with proper error handling and cleanup
+  - ✅ Unit tests with 100% coverage for models, config, and database layers
+  - ✅ CLI interface for database initialization and health checks
+- [ ] Implement RSS feed fetcher with feedparser integration and unit tests
+- [ ] Create website scraper with BeautifulSoup for content extraction and unit tests
+
+#### Phase 2: Service Features  
+- [ ] Add error handling, retry logic, and rate limiting utilities with unit tests
+- [ ] Build core fetcher service with concurrent processing and unit tests
+- [ ] Create health check API and CLI interface with unit tests
+
+#### Phase 3: Integration & Deployment
+- [ ] Add integration tests for end-to-end workflows
+- [ ] Implement monitoring, logging, and production deployment
