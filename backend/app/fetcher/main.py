@@ -4,8 +4,10 @@ import logging
 import sys
 import argparse
 from typing import Optional
+import json
 
 from . import settings, create_database_tables, test_database_connection
+from .rss_fetcher import RSSFetcher
 
 
 def setup_logging(level: str = "INFO"):
@@ -53,11 +55,76 @@ def health_check():
     return True
 
 
+def dry_run_rss(url: str, limit: int = 5):
+    """
+    Dry run RSS feed fetching - fetch and display articles without saving to database.
+    
+    Args:
+        url: RSS feed URL to test
+        limit: Number of articles to fetch and display (default: 5)
+    """
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"Dry run RSS fetch from: {url}")
+    logger.info(f"Fetching up to {limit} articles...")
+    
+    try:
+        fetcher = RSSFetcher()
+        
+        # Validate the RSS URL first
+        if not fetcher.validate_rss_url(url):
+            logger.error(f"Invalid RSS feed URL: {url}")
+            return False
+        
+        # Fetch the feed
+        feed = fetcher.fetch_feed(url)
+        
+        # Limit the number of entries to process
+        entries_to_process = feed.entries[:limit] if len(feed.entries) > limit else feed.entries
+        
+        logger.info(f"Found {len(feed.entries)} total articles, showing first {len(entries_to_process)}")
+        print("\n" + "="*80)
+        print(f"RSS FEED DRY RUN RESULTS")
+        print(f"URL: {url}")
+        print(f"Feed Title: {getattr(feed.feed, 'title', 'Unknown')}")
+        print(f"Feed Description: {getattr(feed.feed, 'description', 'No description')}")
+        print("="*80)
+        
+        for i, entry in enumerate(entries_to_process, 1):
+            try:
+                article_data = fetcher.parse_entry(entry, url)
+                
+                print(f"\n[{i}] {article_data['title']}")
+                print(f"    URL: {article_data['url']}")
+                if article_data['author']:
+                    print(f"    Author: {article_data['author']}")
+                if article_data['published_at']:
+                    print(f"    Published: {article_data['published_at'].strftime('%Y-%m-%d %H:%M:%S UTC')}")
+                if article_data['summary']:
+                    # Truncate summary to avoid overwhelming output
+                    summary = article_data['summary'][:200] + "..." if len(article_data['summary']) > 200 else article_data['summary']
+                    print(f"    Summary: {summary}")
+                print("-" * 40)
+                
+            except Exception as e:
+                logger.error(f"Error parsing entry {i}: {e}")
+                continue
+        
+        print(f"\nDry run completed successfully! Processed {len(entries_to_process)} articles.")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Dry run failed: {e}")
+        return False
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Content Fetcher Service")
     parser.add_argument("--init-db", action="store_true", help="Initialize database tables")
     parser.add_argument("--health", action="store_true", help="Run health check")
+    parser.add_argument("--dry-run-rss", type=str, metavar="URL", help="Dry run RSS feed fetching from URL")
+    parser.add_argument("--limit", type=int, default=5, help="Number of articles to fetch in dry run (default: 5)")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
                        help="Set logging level")
     
@@ -79,7 +146,10 @@ def main():
     if args.health:
         success = health_check()
     
-    if not args.init_db and not args.health:
+    if args.dry_run_rss:
+        success = dry_run_rss(args.dry_run_rss, args.limit)
+    
+    if not args.init_db and not args.health and not args.dry_run_rss:
         # Default action: show help
         parser.print_help()
     
