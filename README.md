@@ -23,28 +23,6 @@ A web application that aggregates news from various sources including RSS feeds 
 
 ## Development
 
-### Local Development Setup
-
-1. **Backend setup:**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
-
-2. **Frontend setup:**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-3. **Fetcher service (now part of backend):**
-   ```bash
-   cd backend
-   python -m app.fetcher.main --help
-   ```
-
 ### Project Structure
 
 ```
@@ -74,14 +52,45 @@ A web application that aggregates news from various sources including RSS feeds 
 └── docker-compose.yml # Multi-service orchestration
 ```
 
-## Features (V1)
+### Running Tests
 
-- **Single User Support**: Local configuration and preferences
-- **Source Management**: Add/remove RSS feeds and website sources (up to 100)
-- **Content Aggregation**: Hourly refresh from all active sources
-- **Article Storage**: 1-year retention period with full-text search
-- **Web Interface**: Clean, responsive design for article browsing
-- **Search & Filter**: Find articles by content, source, or date
+* Backend: `python -m pytest backend/tests/ -v`
+* Test Coverage: `python -m pytest backend/tests/ --cov=app --cov-report=html --cov-report=term-missing`
+
+### Content Fetcher CLI
+
+The fetcher service includes a CLI for database management and RSS feed testing:
+
+```bash
+cd backend
+
+# Initialize database tables
+python -m app.fetcher.main --init-db
+
+# Run health check
+python -m app.fetcher.main --health
+
+# Test RSS feed (dry run - no database save)
+python -m app.fetcher.main --dry-run-rss https://feeds.bbci.co.uk/news/rss.xml --limit 5
+
+# Run fetch cycle across all active sources
+python -m app.fetcher.main --fetch
+
+# Fetch from a single source by ID
+python -m app.fetcher.main --fetch-source 1
+
+# Set logging level
+python -m app.fetcher.main --health --log-level DEBUG
+```
+
+**CLI Options:**
+- `--init-db` - Initialize database tables
+- `--health` - Run health check
+- `--dry-run-rss URL` - Test RSS feed without saving to database
+- `--fetch` - Run fetch cycle across all active sources
+- `--fetch-source ID` - Fetch articles from a single source by ID
+- `--limit N` - Number of articles to show in dry run (default: 5)
+- `--log-level LEVEL` - Set logging level (DEBUG, INFO, WARNING, ERROR)
 
 ## Technology Stack
 
@@ -109,13 +118,3 @@ System:
 POST   /api/v1/refresh              # Trigger manual refresh
 GET    /api/v1/health               # Health check
 ```
-
-## Environment Variables
-
-See `.env.example` for all configuration options.
-
-## Contributing
-
-1. Follow the development phases outlined in `DESIGN.md`
-2. Run tests before submitting changes
-3. Follow the established code style and patterns
