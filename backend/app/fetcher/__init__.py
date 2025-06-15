@@ -10,6 +10,7 @@ from .database import (
     Base
 )
 from .models import Source, Article
+from .runner import FetcherRunner
 
 __all__ = [
     "settings",
@@ -20,5 +21,6 @@ __all__ = [
     "SessionLocal",
     "Base",
     "Source",
-    "Article"
+    "Article",
+    "FetcherRunner"
 ]
