@@ -201,7 +201,6 @@ Since the basic structure is now in place, when beginning implementation:
 
 ### Fecther
 
-#### Phase 1: Core Infrastructure
 - [x] **Set up database models, configuration, and connection management** ✅
   - ✅ Database models: `Source`, `Article` aligned with V1 schema (`/database/init.sql`)
   - ✅ Configuration management with Pydantic settings and environment variables
@@ -215,13 +214,4 @@ Since the basic structure is now in place, when beginning implementation:
   - ✅ Robust error handling for HTTP requests and feed parsing
   - ✅ URL validation and relative URL resolution
   - ✅ Comprehensive unit tests with 100% coverage (17 test cases)
-- [ ] Create website scraper with BeautifulSoup for content extraction and unit tests
-
-#### Phase 2: Service Features  
-- [ ] Add error handling, retry logic, and rate limiting utilities with unit tests
-- [ ] Build core fetcher service with concurrent processing and unit tests
-- [ ] Create health check API and CLI interface with unit tests
-
-#### Phase 3: Integration & Deployment
-- [ ] Add integration tests for end-to-end workflows
-- [ ] Implement monitoring, logging, and production deployment
+- [ ] 
