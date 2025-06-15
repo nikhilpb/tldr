@@ -5,8 +5,10 @@ import sys
 import argparse
 from typing import Optional
 import json
+import os
 
-from . import settings, create_database_tables, test_database_connection
+from . import settings, create_database_tables, test_database_connection, get_database_session
+from .models import Source
 from .rss_fetcher import RSSFetcher
 from .runner import FetcherRunner
 
@@ -145,6 +147,134 @@ def run_single_source(source_id: int):
         return False
 
 
+def list_sources():
+    """List all sources in the database."""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        db_session = next(get_database_session())
+        sources = db_session.query(Source).all()
+        
+        if not sources:
+            print("No sources found in database.")
+            return True
+        
+        print("\n" + "="*80)
+        print(f"SOURCES LIST ({len(sources)} total)")
+        print("="*80)
+        
+        for source in sources:
+            status = "🟢 Active" if source.is_active else "🔴 Inactive"
+            error_info = f" ({source.fetch_error_count} errors)" if source.fetch_error_count > 0 else ""
+            
+            print(f"\n[{source.id}] {source.name}")
+            print(f"    URL: {source.url}")
+            print(f"    Type: {source.type.upper()}")
+            print(f"    Status: {status}{error_info}")
+            
+            if source.last_fetched_at:
+                print(f"    Last Fetched: {source.last_fetched_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            else:
+                print(f"    Last Fetched: Never")
+            
+            if source.last_error_message:
+                error_msg = source.last_error_message[:100] + "..." if len(source.last_error_message) > 100 else source.last_error_message
+                print(f"    Last Error: {error_msg}")
+            
+            print("-" * 40)
+        
+        print(f"\nTotal: {len(sources)} sources")
+        active_count = sum(1 for s in sources if s.is_active)
+        print(f"Active: {active_count}, Inactive: {len(sources) - active_count}")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to list sources: {e}")
+        return False
+
+
+def add_sources_from_json(file_path: str):
+    """Add sources from JSON file to database."""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        if not os.path.exists(file_path):
+            logger.error(f"JSON file not found: {file_path}")
+            return False
+        
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+        
+        if 'sources' not in data:
+            logger.error("JSON file must contain 'sources' array")
+            return False
+        
+        sources_data = data['sources']
+        if not isinstance(sources_data, list):
+            logger.error("'sources' must be an array")
+            return False
+        
+        if not sources_data:
+            logger.info("No sources found in JSON file")
+            return True
+        
+        db_session = next(get_database_session())
+        added_count = 0
+        skipped_count = 0
+        
+        print(f"\nProcessing {len(sources_data)} sources from {file_path}...")
+        
+        for i, source_data in enumerate(sources_data, 1):
+            try:
+                # Validate required fields
+                required_fields = ['name', 'url', 'type']
+                for field in required_fields:
+                    if field not in source_data:
+                        logger.error(f"Source {i}: Missing required field '{field}'")
+                        continue
+                
+                # Check if source already exists
+                existing = db_session.query(Source).filter(Source.url == source_data['url']).first()
+                if existing:
+                    print(f"[{i}] Skipped: {source_data['name']} (URL already exists)")
+                    skipped_count += 1
+                    continue
+                
+                # Create new source
+                new_source = Source(
+                    name=source_data['name'],
+                    url=source_data['url'],
+                    type=source_data['type'],
+                    is_active=source_data.get('is_active', True)
+                )
+                
+                db_session.add(new_source)
+                db_session.commit()
+                
+                print(f"[{i}] Added: {source_data['name']} ({source_data['type']})")
+                added_count += 1
+                
+            except Exception as e:
+                logger.error(f"Error processing source {i}: {e}")
+                db_session.rollback()
+                continue
+        
+        print(f"\nSummary:")
+        print(f"  Added: {added_count} sources")
+        print(f"  Skipped: {skipped_count} sources (already exist)")
+        print(f"  Total processed: {len(sources_data)} sources")
+        
+        return True
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON format: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Failed to add sources from JSON: {e}")
+        return False
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Content Fetcher Service")
@@ -153,6 +283,8 @@ def main():
     parser.add_argument("--dry-run-rss", type=str, metavar="URL", help="Dry run RSS feed fetching from URL")
     parser.add_argument("--fetch", action="store_true", help="Run fetch cycle across all active sources")
     parser.add_argument("--fetch-source", type=int, metavar="ID", help="Fetch articles from a single source by ID")
+    parser.add_argument("--list-sources", action="store_true", help="List all sources in database")
+    parser.add_argument("--add-sources", type=str, metavar="FILE", help="Add sources from JSON file")
     parser.add_argument("--limit", type=int, default=5, help="Number of articles to fetch in dry run (default: 5)")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
                        help="Set logging level")
@@ -184,7 +316,13 @@ def main():
     if args.fetch_source:
         success = run_single_source(args.fetch_source)
     
-    if not any([args.init_db, args.health, args.dry_run_rss, args.fetch, args.fetch_source]):
+    if args.list_sources:
+        success = list_sources()
+    
+    if args.add_sources:
+        success = add_sources_from_json(args.add_sources)
+    
+    if not any([args.init_db, args.health, args.dry_run_rss, args.fetch, args.fetch_source, args.list_sources, args.add_sources]):
         # Default action: show help
         parser.print_help()
     

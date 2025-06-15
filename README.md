@@ -79,6 +79,12 @@ python -m app.fetcher.main --fetch
 # Fetch from a single source by ID
 python -m app.fetcher.main --fetch-source 1
 
+# List all sources in database
+python -m app.fetcher.main --list-sources
+
+# Add sources from JSON file
+python -m app.fetcher.main --add-sources app/fetcher/sources.json
+
 # Set logging level
 python -m app.fetcher.main --health --log-level DEBUG
 ```
@@ -89,8 +95,24 @@ python -m app.fetcher.main --health --log-level DEBUG
 - `--dry-run-rss URL` - Test RSS feed without saving to database
 - `--fetch` - Run fetch cycle across all active sources
 - `--fetch-source ID` - Fetch articles from a single source by ID
+- `--list-sources` - List all sources in database with status and metadata
+- `--add-sources FILE` - Add sources from JSON file to database
 - `--limit N` - Number of articles to show in dry run (default: 5)
 - `--log-level LEVEL` - Set logging level (DEBUG, INFO, WARNING, ERROR)
+
+**JSON Source Format:**
+```json
+{
+  "sources": [
+    {
+      "name": "OpenAI News",
+      "url": "https://openai.com/news/rss.xml",
+      "type": "rss",
+      "is_active": true
+    }
+  ]
+}
+```
 
 ## Technology Stack
 

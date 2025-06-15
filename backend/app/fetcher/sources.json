@@ -1,0 +1,10 @@
+{
+  "sources": [
+    {
+      "name": "OpenAI News",
+      "url": "https://openai.com/news/rss.xml",
+      "type": "rss",
+      "is_active": true
+    }
+  ]
+}
