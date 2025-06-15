@@ -8,6 +8,7 @@ import json
 
 from . import settings, create_database_tables, test_database_connection
 from .rss_fetcher import RSSFetcher
+from .runner import FetcherRunner
 
 
 def setup_logging(level: str = "INFO"):
@@ -118,12 +119,40 @@ def dry_run_rss(url: str, limit: int = 5):
         return False
 
 
+def run_fetcher():
+    """Run the main fetch cycle across all active sources."""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        runner = FetcherRunner()
+        runner.run_fetch_cycle()
+        return True
+    except Exception as e:
+        logger.error(f"Fetch cycle failed: {e}")
+        return False
+
+
+def run_single_source(source_id: int):
+    """Run fetch for a single source."""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        runner = FetcherRunner()
+        runner.run_single_source(source_id)
+        return True
+    except Exception as e:
+        logger.error(f"Single source fetch failed: {e}")
+        return False
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Content Fetcher Service")
     parser.add_argument("--init-db", action="store_true", help="Initialize database tables")
     parser.add_argument("--health", action="store_true", help="Run health check")
     parser.add_argument("--dry-run-rss", type=str, metavar="URL", help="Dry run RSS feed fetching from URL")
+    parser.add_argument("--fetch", action="store_true", help="Run fetch cycle across all active sources")
+    parser.add_argument("--fetch-source", type=int, metavar="ID", help="Fetch articles from a single source by ID")
     parser.add_argument("--limit", type=int, default=5, help="Number of articles to fetch in dry run (default: 5)")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
                        help="Set logging level")
@@ -149,7 +178,13 @@ def main():
     if args.dry_run_rss:
         success = dry_run_rss(args.dry_run_rss, args.limit)
     
-    if not args.init_db and not args.health and not args.dry_run_rss:
+    if args.fetch:
+        success = run_fetcher()
+    
+    if args.fetch_source:
+        success = run_single_source(args.fetch_source)
+    
+    if not any([args.init_db, args.health, args.dry_run_rss, args.fetch, args.fetch_source]):
         # Default action: show help
         parser.print_help()
     
