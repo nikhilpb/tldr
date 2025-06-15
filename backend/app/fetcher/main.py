@@ -8,7 +8,7 @@ import json
 import os
 
 from . import settings, create_database_tables, test_database_connection, get_database_session
-from .models import Source
+from .models import Source, Article
 from .rss_fetcher import RSSFetcher
 from .runner import FetcherRunner
 
@@ -275,6 +275,69 @@ def add_sources_from_json(file_path: str):
         return False
 
 
+def list_recent_articles(source_id: int, limit: int = 10):
+    """List recent articles from a specific source."""
+    logger = logging.getLogger(__name__)
+    
+    try:
+        db_session = next(get_database_session())
+        
+        # First, check if source exists
+        source = db_session.query(Source).filter(Source.id == source_id).first()
+        if not source:
+            print(f"❌ Source with ID {source_id} not found.")
+            return False
+        
+        # Query articles from this source, ordered by most recent first
+        articles = db_session.query(Article).filter(
+            Article.source_id == source_id
+        ).order_by(
+            Article.published_at.desc().nullslast(),  # Published date first (nulls last)
+            Article.created_at.desc()  # Then creation date
+        ).limit(limit).all()
+        
+        if not articles:
+            print(f"📭 No articles found for source '{source.name}' (ID: {source_id}).")
+            return True
+        
+        print("\n" + "="*80)
+        print(f"RECENT ARTICLES FROM SOURCE: {source.name}")
+        print(f"Source ID: {source_id} | Type: {source.type.upper()}")
+        print(f"Showing {len(articles)} most recent articles (limit: {limit})")
+        print("="*80)
+        
+        for i, article in enumerate(articles, 1):
+            print(f"\n[{i}] {article.title}")
+            print(f"    URL: {article.url}")
+            
+            if article.author:
+                print(f"    Author: {article.author}")
+            
+            if article.published_at:
+                print(f"    Published: {article.published_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            
+            print(f"    Added to DB: {article.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            
+            if article.summary:
+                # Truncate summary to avoid overwhelming output
+                summary = article.summary[:300] + "..." if len(article.summary) > 300 else article.summary
+                print(f"    Summary: {summary}")
+            
+            print("-" * 40)
+        
+        print(f"\nTotal articles shown: {len(articles)}")
+        if len(articles) == limit:
+            total_count = db_session.query(Article).filter(Article.source_id == source_id).count()
+            if total_count > limit:
+                print(f"Note: This source has {total_count} total articles. Use --limit to see more.")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to list articles for source {source_id}: {e}")
+        return False
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Content Fetcher Service")
@@ -284,8 +347,9 @@ def main():
     parser.add_argument("--fetch", action="store_true", help="Run fetch cycle across all active sources")
     parser.add_argument("--fetch-source", type=int, metavar="ID", help="Fetch articles from a single source by ID")
     parser.add_argument("--list-sources", action="store_true", help="List all sources in database")
+    parser.add_argument("--list-articles", type=int, metavar="SOURCE_ID", help="List recent articles from a specific source")
     parser.add_argument("--add-sources", type=str, metavar="FILE", help="Add sources from JSON file")
-    parser.add_argument("--limit", type=int, default=5, help="Number of articles to fetch in dry run (default: 5)")
+    parser.add_argument("--limit", type=int, help="Number of articles to fetch in dry run or list (default: 5 for dry-run, 10 for list-articles)")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
                        help="Set logging level")
     
@@ -308,7 +372,8 @@ def main():
         success = health_check()
     
     if args.dry_run_rss:
-        success = dry_run_rss(args.dry_run_rss, args.limit)
+        limit = args.limit if args.limit is not None else 5
+        success = dry_run_rss(args.dry_run_rss, limit)
     
     if args.fetch:
         success = run_fetcher()
@@ -319,10 +384,14 @@ def main():
     if args.list_sources:
         success = list_sources()
     
+    if args.list_articles:
+        limit = args.limit if args.limit is not None else 10
+        success = list_recent_articles(args.list_articles, limit)
+    
     if args.add_sources:
         success = add_sources_from_json(args.add_sources)
     
-    if not any([args.init_db, args.health, args.dry_run_rss, args.fetch, args.fetch_source, args.list_sources, args.add_sources]):
+    if not any([args.init_db, args.health, args.dry_run_rss, args.fetch, args.fetch_source, args.list_sources, args.list_articles, args.add_sources]):
         # Default action: show help
         parser.print_help()
     
