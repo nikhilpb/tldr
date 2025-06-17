@@ -7,7 +7,7 @@ import feedparser
 import requests
 
 from app.fetcher.rss_fetcher import RSSFetcher
-from app.fetcher.models import Source
+from app.models import Source
 
 
 class TestRSSFetcher:

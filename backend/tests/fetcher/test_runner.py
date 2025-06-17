@@ -8,8 +8,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.fetcher.runner import FetcherRunner
-from app.fetcher.models import Source, Article
-from app.fetcher.database import Base
+from app.models import Source, Article
+from app.db import Base
 
 
 @pytest.fixture

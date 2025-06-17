@@ -6,8 +6,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.fetcher.database import Base
-from app.fetcher.models import Source, Article
+from app.db import Base
+from app.models import Source, Article
 
 
 @pytest.fixture
