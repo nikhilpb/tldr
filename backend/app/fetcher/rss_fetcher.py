@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 import logging
 from email.utils import parsedate_to_datetime
 
-from .models import Source, Article
+from ..models import Source, Article
 
 logger = logging.getLogger(__name__)
 

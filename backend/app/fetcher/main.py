@@ -8,7 +8,7 @@ import json
 import os
 
 from . import settings, create_database_tables, test_database_connection, get_database_session
-from .models import Source, Article
+from ..models import Source, Article
 from .rss_fetcher import RSSFetcher
 from .runner import FetcherRunner
 

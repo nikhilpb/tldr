@@ -8,10 +8,19 @@ from datetime import datetime, timezone
 import hashlib
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 
-from .database import get_database_session
-from .models import Source, Article
+from ..db import get_database_session as _get_database_session, create_database_engine
+from ..models import Source, Article
 from .rss_fetcher import RSSFetcher
 from .config import settings
+from sqlalchemy.orm import sessionmaker
+
+# Create database session for this module
+engine = create_database_engine(settings.database_url)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_database_session():
+    """Get database session for runner."""
+    yield from _get_database_session(SessionLocal)
 
 logger = logging.getLogger(__name__)
 
