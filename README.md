@@ -4,22 +4,7 @@ A web application that aggregates news from various sources including RSS feeds 
 
 ## Quick Start
 
-1. **Clone and setup environment:**
-   ```bash
-   git clone <repository-url>
-   cd tldr
-   cp .env.example .env
-   ```
-
-2. **Start with Docker Compose:**
-   ```bash
-   docker-compose up --build
-   ```
-
-3. **Access the application:**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
+TODO
 
 ## Development
 
@@ -137,6 +122,5 @@ GET    /api/v1/articles/search      # Search articles
 GET    /api/v1/articles/{id}        # Get article details
 
 System:
-POST   /api/v1/refresh              # Trigger manual refresh
 GET    /api/v1/health               # Health check
 ```
