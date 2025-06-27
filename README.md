@@ -6,6 +6,35 @@ A web application that aggregates news from various sources including RSS feeds 
 
 TODO
 
+## Setup
+
+### Prerequisites
+
+Install [uv](https://docs.astral.sh/uv/) for Python dependency management:
+
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or using Homebrew
+brew install uv
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### Backend Setup
+
+```bash
+cd backend
+
+# Install dependencies with dev tools (creates virtual environment automatically)
+uv sync --extra dev
+
+# Initialize database tables (if needed)
+uv run python -m app.fetcher.main --init-db
+```
+
 ## Development
 
 ### Project Structure
@@ -39,8 +68,8 @@ TODO
 
 ### Running Tests
 
-* Backend: `python -m pytest backend/tests/ -v`
-* Test Coverage: `python -m pytest backend/tests/ --cov=app --cov-report=html --cov-report=term-missing`
+* Backend: `cd backend && uv run pytest tests/ -v`
+* Test Coverage: `cd backend && uv run pytest tests/ --cov=app --cov-report=html --cov-report=term-missing`
 
 ### Content Fetcher CLI
 
@@ -50,28 +79,28 @@ The fetcher service includes a CLI for database management and RSS feed testing:
 cd backend
 
 # Initialize database tables
-python -m app.fetcher.main --init-db
+uv run python -m app.fetcher.main --init-db
 
 # Run health check
-python -m app.fetcher.main --health
+uv run python -m app.fetcher.main --health
 
 # Test RSS feed (dry run - no database save)
-python -m app.fetcher.main --dry-run-rss https://feeds.bbci.co.uk/news/rss.xml --limit 5
+uv run python -m app.fetcher.main --dry-run-rss https://feeds.bbci.co.uk/news/rss.xml --limit 5
 
 # Run fetch cycle across all active sources
-python -m app.fetcher.main --fetch
+uv run python -m app.fetcher.main --fetch
 
 # Fetch from a single source by ID
-python -m app.fetcher.main --fetch-source 1
+uv run python -m app.fetcher.main --fetch-source 1
 
 # List all sources in database
-python -m app.fetcher.main --list-sources
+uv run python -m app.fetcher.main --list-sources
 
 # Add sources from JSON file
-python -m app.fetcher.main --add-sources app/fetcher/sources.json
+uv run python -m app.fetcher.main --add-sources app/fetcher/sources.json
 
 # Set logging level
-python -m app.fetcher.main --health --log-level DEBUG
+uv run python -m app.fetcher.main --health --log-level DEBUG
 ```
 
 **CLI Options:**
