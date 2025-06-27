@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tldr-backend"
+version = "0.1.0"
+description = "News Aggregator Backend Service"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi==0.104.1",
+    "uvicorn[standard]==0.24.0",
+    "sqlalchemy>=2.0.35",
+    "alembic>=1.13.0",
+    "psycopg[binary]>=3.1.0",
+    "python-dotenv==1.0.0",
+    "pydantic>=2.8.0",
+    "pydantic-settings>=2.3.0",
+    "httpx==0.25.2",
+    "feedparser>=6.0.11",
+    "beautifulsoup4==4.12.2",
+    "requests==2.31.0",
+    "apscheduler==3.10.4",
+    "asyncio-throttle==1.0.2",
+    "python-dateutil==2.8.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"] 

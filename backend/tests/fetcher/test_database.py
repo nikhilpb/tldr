@@ -28,7 +28,7 @@ class TestDatabaseEngine:
         """Test PostgreSQL engine creation with proper configuration."""
         from app.db import create_database_engine
         
-        engine = create_database_engine("postgresql://user:pass@localhost/testdb")
+        engine = create_database_engine("postgresql+psycopg://user:pass@localhost/testdb")
         
         assert engine is not None
         assert "postgresql" in str(engine.url)
