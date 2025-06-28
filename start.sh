@@ -78,7 +78,7 @@ sleep 3
 # Check if backend is still running
 if ! kill -0 $BACKEND_PID 2>/dev/null; then
     print_error "Failed to start backend server. Check backend.log for details."
-    cat ../logs/backend.log
+    cat ../$LOG_DIR/backend.log
     exit 1
 fi
 
