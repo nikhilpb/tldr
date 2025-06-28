@@ -55,3 +55,5 @@ frontend/.nyc_output/
 
 # ESLint cache
 frontend/.eslintcache
+
+logs/
