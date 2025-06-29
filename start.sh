@@ -57,6 +57,12 @@ if [ ! -d "backend" ] || [ ! -d "frontend" ]; then
     exit 1
 fi
 
+# Create logs directory if it doesn't exist
+if [ ! -d "$LOG_DIR" ]; then
+    print_status "Creating logs directory..."
+    mkdir -p "$LOG_DIR"
+fi
+
 # Start backend server
 print_status "Starting backend API server..."
 cd backend
