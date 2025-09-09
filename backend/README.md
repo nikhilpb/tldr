@@ -40,6 +40,16 @@ uv run python -m app.fetcher.main --health
 uv run python -m app.fetcher.main --fetch
 ```
 
+### Feed Discovery
+
+Use the feed discovery utility to detect RSS/Atom feeds for a webpage:
+
+```bash
+uv run python -m app.fetcher.feed_discovery https://example.com
+```
+
+Replace `https://example.com` with the target URL. The command prints any discovered feeds and a summary indicating whether RSS and/or Atom feeds were found.
+
 ## API Documentation
 
 When running the development server, API documentation is available at:

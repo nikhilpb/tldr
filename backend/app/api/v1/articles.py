@@ -75,7 +75,7 @@ class ArticleDetailResponse(BaseModel):
 
 @router.get("/articles", response_model=ArticleListResponse)
 async def list_articles(
-    days_back: Optional[int] = Query(7, ge=1, le=365, description="Number of days back to fetch articles"),
+    days_back: Optional[int] = Query(365, ge=1, le=365, description="Number of days back to fetch articles"),
     limit: Optional[int] = Query(20, ge=1, le=100, description="Number of articles per page"),
     offset: Optional[int] = Query(0, ge=0, description="Pagination offset"),
     source_id: Optional[int] = Query(None, description="Filter by source ID"),

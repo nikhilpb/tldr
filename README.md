@@ -8,19 +8,6 @@ TODO
 
 ## Setup
 
-### Prerequisites
-
-Install [uv](https://docs.astral.sh/uv/) for Python dependency management:
-
-```bash
-# macOS/Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Or using Homebrew
-brew install uv
-
-# Windows
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 ### Backend Setup
