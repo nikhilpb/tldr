@@ -99,14 +99,16 @@ def dry_run_rss(url: str, limit: int = 5):
                 
                 print(f"\n[{i}] {article_data['title']}")
                 print(f"    URL: {article_data['url']}")
-                if article_data['author']:
-                    print(f"    Author: {article_data['author']}")
                 if article_data['published_at']:
-                    print(f"    Published: {article_data['published_at'].strftime('%Y-%m-%d %H:%M:%S UTC')}")
+                    print(f"    📅 Published: {article_data['published_at'].strftime('%Y-%m-%d %H:%M:%S UTC')}")
+                else:
+                    print(f"    📅 Published: Unknown")
+                if article_data['author']:
+                    print(f"    👤 Author: {article_data['author']}")
                 if article_data['summary']:
                     # Truncate summary to avoid overwhelming output
                     summary = article_data['summary'][:200] + "..." if len(article_data['summary']) > 200 else article_data['summary']
-                    print(f"    Summary: {summary}")
+                    print(f"    📄 Summary: {summary}")
                 print("-" * 40)
                 
             except Exception as e:
@@ -144,6 +146,96 @@ def run_single_source(source_id: int):
         return True
     except Exception as e:
         logger.error(f"Single source fetch failed: {e}")
+        return False
+
+
+def dry_run_source(source_id: int, limit: int = 5):
+    """
+    Dry run fetch for a specific source ID - fetch and display articles without saving to database.
+    
+    Args:
+        source_id: Source ID to test
+        limit: Number of articles to fetch and display (default: 5)
+    """
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"Dry run fetch for source ID: {source_id}")
+    logger.info(f"Fetching up to {limit} articles...")
+    
+    try:
+        # Get database session
+        db_session = next(get_database_session())
+        
+        # Get the source
+        source = db_session.query(Source).filter(Source.id == source_id).first()
+        if not source:
+            logger.error(f"Source with ID {source_id} not found")
+            print(f"❌ Source with ID {source_id} not found.")
+            return False
+        
+        # Create fetcher runner to use its fetching logic
+        runner = FetcherRunner()
+        
+        try:
+            # Fetch articles from the source
+            articles = runner.fetch_articles_from_source(source)
+            
+            # Limit the number of articles to display
+            articles_to_display = articles[:limit] if len(articles) > limit else articles
+            
+            print("\n" + "="*80)
+            print(f"SOURCE DRY RUN RESULTS")
+            print(f"Source ID: {source_id}")
+            print(f"Source Name: {source.name}")
+            print(f"Source URL: {source.url}")
+            print(f"Source Type: {source.type.upper()}")
+            print(f"Source Status: {'🟢 Active' if source.is_active else '🔴 Inactive'}")
+            if source.last_fetched_at:
+                print(f"Last Fetched: {source.last_fetched_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+            else:
+                print(f"Last Fetched: Never")
+            print("="*80)
+            
+            logger.info(f"Found {len(articles)} total articles, showing first {len(articles_to_display)}")
+            
+            if not articles_to_display:
+                print("\n📭 No articles found from this source.")
+                return True
+            
+            for i, article_data in enumerate(articles_to_display, 1):
+                try:
+                    print(f"\n[{i}] {article_data['title']}")
+                    print(f"    URL: {article_data['url']}")
+                    if article_data.get('published_at'):
+                        print(f"    📅 Published: {article_data['published_at'].strftime('%Y-%m-%d %H:%M:%S UTC')}")
+                    else:
+                        print(f"    📅 Published: Unknown")
+                    if article_data.get('author'):
+                        print(f"    👤 Author: {article_data['author']}")
+                    if article_data.get('summary'):
+                        # Truncate summary to avoid overwhelming output
+                        summary = article_data['summary'][:200] + "..." if len(article_data['summary']) > 200 else article_data['summary']
+                        print(f"    📄 Summary: {summary}")
+                    print("-" * 40)
+                    
+                except Exception as e:
+                    logger.error(f"Error displaying article {i}: {e}")
+                    continue
+            
+            print(f"\nDry run completed successfully! Processed {len(articles_to_display)} articles.")
+            if len(articles) > limit:
+                print(f"Note: This source has {len(articles)} total articles. Use --limit to see more.")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error fetching from source {source_id}: {e}")
+            print(f"❌ Error fetching from source {source_id}: {e}")
+            return False
+        
+    except Exception as e:
+        logger.error(f"Dry run failed for source {source_id}: {e}")
+        print(f"❌ Dry run failed for source {source_id}: {e}")
         return False
 
 
@@ -401,6 +493,7 @@ def main():
     parser.add_argument("--init-db", action="store_true", help="Initialize database tables")
     parser.add_argument("--health", action="store_true", help="Run health check")
     parser.add_argument("--dry-run-rss", type=str, metavar="URL", help="Dry run RSS feed fetching from URL")
+    parser.add_argument("--dry-run-source", type=int, metavar="ID", help="Dry run fetch from a specific source by ID")
     parser.add_argument("--fetch", action="store_true", help="Run fetch cycle across all active sources")
     parser.add_argument("--fetch-source", type=int, metavar="ID", help="Fetch articles from a single source by ID")
     parser.add_argument("--list-sources", action="store_true", help="List all sources in database")
@@ -434,6 +527,10 @@ def main():
         limit = args.limit if args.limit is not None else 5
         success = dry_run_rss(args.dry_run_rss, limit)
     
+    if args.dry_run_source:
+        limit = args.limit if args.limit is not None else 5
+        success = dry_run_source(args.dry_run_source, limit)
+    
     if args.fetch:
         success = run_fetcher()
     
@@ -457,6 +554,7 @@ def main():
         args.init_db,
         args.health,
         args.dry_run_rss,
+        args.dry_run_source,
         args.fetch,
         args.fetch_source,
         args.list_sources,
