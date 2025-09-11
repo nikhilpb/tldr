@@ -338,6 +338,63 @@ def list_recent_articles(source_id: int, limit: int = 10):
         return False
 
 
+def delete_articles_by_source(source_id: int, assume_yes: bool = False):
+    """Delete all articles for a specific source with confirmation.
+    
+    Args:
+        source_id: The ID of the source whose articles should be deleted
+        assume_yes: If True, skip interactive confirmation (dangerous)
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        db_session = next(get_database_session())
+        
+        # Validate source exists
+        source = db_session.query(Source).filter(Source.id == source_id).first()
+        if not source:
+            print(f"❌ Source with ID {source_id} not found.")
+            return False
+        
+        # Count articles to be deleted
+        total_articles = db_session.query(Article).filter(Article.source_id == source_id).count()
+        if total_articles == 0:
+            print(f"📭 No articles to delete for source '{source.name}' (ID: {source_id}).")
+            return True
+        
+        print("\n" + "="*80)
+        print("DANGER: BULK DELETE OF ARTICLES")
+        print("="*80)
+        print(f"You are about to permanently delete {total_articles} articles for:")
+        print(f"  Source: {source.name}")
+        print(f"  Source ID: {source.id}")
+        print("")
+        print("This action cannot be undone.")
+        print("")
+        
+        proceed = assume_yes
+        if not assume_yes:
+            confirmation = input("Type 'DELETE' to confirm, the source ID, or 'n' to cancel: ").strip().lower()
+            proceed = confirmation in {"delete", "y", "yes", str(source_id)}
+        
+        if not proceed:
+            print("Operation cancelled. No articles were deleted.")
+            return True
+        
+        deleted_count = db_session.query(Article).filter(Article.source_id == source_id).delete(synchronize_session=False)
+        db_session.commit()
+        
+        print(f"✅ Deleted {deleted_count} articles for source '{source.name}' (ID: {source_id}).")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to delete articles for source {source_id}: {e}")
+        try:
+            db_session.rollback()
+        except Exception:
+            pass
+        return False
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="Content Fetcher Service")
@@ -348,8 +405,10 @@ def main():
     parser.add_argument("--fetch-source", type=int, metavar="ID", help="Fetch articles from a single source by ID")
     parser.add_argument("--list-sources", action="store_true", help="List all sources in database")
     parser.add_argument("--list-articles", type=int, metavar="SOURCE_ID", help="List recent articles from a specific source")
+    parser.add_argument("--delete-articles", type=int, metavar="SOURCE_ID", help="Delete all articles from a specific source (DANGEROUS)")
     parser.add_argument("--add-sources", type=str, metavar="FILE", help="Add sources from JSON file")
     parser.add_argument("--limit", type=int, help="Number of articles to fetch in dry run or list (default: 5 for dry-run, 10 for list-articles)")
+    parser.add_argument("-y", "--yes", action="store_true", help="Automatic yes to prompts; assume 'yes' to all confirmations")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
                        help="Set logging level")
     
@@ -388,10 +447,23 @@ def main():
         limit = args.limit if args.limit is not None else 10
         success = list_recent_articles(args.list_articles, limit)
     
+    if args.delete_articles:
+        success = delete_articles_by_source(args.delete_articles, assume_yes=args.yes)
+    
     if args.add_sources:
         success = add_sources_from_json(args.add_sources)
     
-    if not any([args.init_db, args.health, args.dry_run_rss, args.fetch, args.fetch_source, args.list_sources, args.list_articles, args.add_sources]):
+    if not any([
+        args.init_db,
+        args.health,
+        args.dry_run_rss,
+        args.fetch,
+        args.fetch_source,
+        args.list_sources,
+        args.list_articles,
+        args.delete_articles,
+        args.add_sources
+    ]):
         # Default action: show help
         parser.print_help()
     
