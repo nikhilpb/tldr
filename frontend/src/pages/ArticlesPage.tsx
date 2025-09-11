@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { Article, Source } from '../types';
 import ArticleModal from '../components/ArticleModal';
@@ -6,56 +7,61 @@ import ArticleModal from '../components/ArticleModal';
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
-  const [selectedSourceId, setSelectedSourceId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sourceIdParam = searchParams.get('source_id');
+  const selectedSourceId =
+    sourceIdParam && !Number.isNaN(Number(sourceIdParam))
+      ? Number(sourceIdParam)
+      : null;
 
   useEffect(() => {
-    loadData();
+    const loadSources = async () => {
+      try {
+        const sourcesResponse = await api.getSources();
+        setSources(sourcesResponse);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load sources');
+      }
+    };
+    loadSources();
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [articlesResponse, sourcesResponse] = await Promise.all([
-        api.getArticles({ 
-          limit: 50,
-          sort: 'newest',
-          source_id: selectedSourceId || undefined
-        }),
-        api.getSources()
-      ]);
-      setArticles(articlesResponse.articles);
-      setSources(sourcesResponse);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    loadArticles(selectedSourceId);
+  }, [selectedSourceId]);
 
-  const loadArticles = async (sourceId?: number | null) => {
+  const loadArticles = async (sourceId: number | null = selectedSourceId) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getArticles({ 
+      const response = await api.getArticles({
         limit: 50,
         sort: 'newest',
-        source_id: sourceId || undefined
+        source_id: sourceId ?? undefined
       });
       setArticles(response.articles);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load articles');
+      if (err instanceof Error && (err as any).status === 404) {
+        setError('Source not found');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load articles');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleSourceChange = (sourceId: number | null) => {
-    setSelectedSourceId(sourceId);
-    loadArticles(sourceId);
+    const params = new URLSearchParams(searchParams);
+    if (sourceId) {
+      params.set('source_id', sourceId.toString());
+    } else {
+      params.delete('source_id');
+    }
+    setSearchParams(params);
   };
 
   const formatDate = (dateString?: string) => {
@@ -77,9 +83,16 @@ export default function ArticlesPage() {
     return (
       <div>
         <div className="error">{error}</div>
-        <button className="btn btn-primary" onClick={() => loadArticles(selectedSourceId)}>
-          Retry
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-primary" onClick={() => loadArticles()}>
+            Retry
+          </button>
+          {selectedSourceId && error === 'Source not found' && (
+            <button className="btn" onClick={() => handleSourceChange(null)}>
+              Clear filter
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -92,7 +105,7 @@ export default function ArticlesPage() {
           <select
             id="source-filter"
             className="form-input"
-            value={selectedSourceId || ''}
+            value={selectedSourceId?.toString() || ''}
             onChange={(e) => handleSourceChange(e.target.value ? parseInt(e.target.value) : null)}
           >
             <option value="">All sources</option>
