@@ -12,32 +12,26 @@ export default function ArticlesPage() {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const sourceIdParam = searchParams.get('source_id');
-  const selectedSourceId = sourceIdParam ? parseInt(sourceIdParam, 10) : null;
+  const selectedSourceId =
+    sourceIdParam && !Number.isNaN(Number(sourceIdParam))
+      ? Number(sourceIdParam)
+      : null;
 
   useEffect(() => {
-    loadData();
-  }, [selectedSourceId]);
+    const loadSources = async () => {
+      try {
+        const sourcesResponse = await api.getSources();
+        setSources(sourcesResponse);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load sources');
+      }
+    };
+    loadSources();
+  }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [articlesResponse, sourcesResponse] = await Promise.all([
-        api.getArticles({ 
-          limit: 50,
-          sort: 'newest',
-          source_id: selectedSourceId || undefined
-        }),
-        api.getSources()
-      ]);
-      setArticles(articlesResponse.articles);
-      setSources(sourcesResponse);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    loadArticles(selectedSourceId);
+  }, [selectedSourceId]);
 
   const loadArticles = async (sourceId: number | null = selectedSourceId) => {
     try {
@@ -46,7 +40,7 @@ export default function ArticlesPage() {
       const response = await api.getArticles({
         limit: 50,
         sort: 'newest',
-        source_id: sourceId || undefined
+        source_id: sourceId ?? undefined
       });
       setArticles(response.articles);
     } catch (err) {
