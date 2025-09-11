@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { Article, Source } from '../types';
 import ArticleModal from '../components/ArticleModal';
@@ -6,14 +7,16 @@ import ArticleModal from '../components/ArticleModal';
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
-  const [selectedSourceId, setSelectedSourceId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sourceIdParam = searchParams.get('source_id');
+  const selectedSourceId = sourceIdParam ? parseInt(sourceIdParam, 10) : null;
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [selectedSourceId]);
 
   const loadData = async () => {
     try {
@@ -36,11 +39,11 @@ export default function ArticlesPage() {
     }
   };
 
-  const loadArticles = async (sourceId?: number | null) => {
+  const loadArticles = async (sourceId: number | null = selectedSourceId) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.getArticles({ 
+      const response = await api.getArticles({
         limit: 50,
         sort: 'newest',
         source_id: sourceId || undefined
@@ -54,8 +57,13 @@ export default function ArticlesPage() {
   };
 
   const handleSourceChange = (sourceId: number | null) => {
-    setSelectedSourceId(sourceId);
-    loadArticles(sourceId);
+    const params = new URLSearchParams(searchParams);
+    if (sourceId) {
+      params.set('source_id', sourceId.toString());
+    } else {
+      params.delete('source_id');
+    }
+    setSearchParams(params);
   };
 
   const formatDate = (dateString?: string) => {
@@ -77,7 +85,7 @@ export default function ArticlesPage() {
     return (
       <div>
         <div className="error">{error}</div>
-        <button className="btn btn-primary" onClick={() => loadArticles(selectedSourceId)}>
+        <button className="btn btn-primary" onClick={() => loadArticles()}>
           Retry
         </button>
       </div>
@@ -92,7 +100,7 @@ export default function ArticlesPage() {
           <select
             id="source-filter"
             className="form-input"
-            value={selectedSourceId || ''}
+            value={selectedSourceId?.toString() || ''}
             onChange={(e) => handleSourceChange(e.target.value ? parseInt(e.target.value) : null)}
           >
             <option value="">All sources</option>
