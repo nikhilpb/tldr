@@ -44,7 +44,11 @@ export default function ArticlesPage() {
       });
       setArticles(response.articles);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load articles');
+      if (err instanceof Error && (err as any).status === 404) {
+        setError('Source not found');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load articles');
+      }
     } finally {
       setLoading(false);
     }
@@ -79,9 +83,16 @@ export default function ArticlesPage() {
     return (
       <div>
         <div className="error">{error}</div>
-        <button className="btn btn-primary" onClick={() => loadArticles()}>
-          Retry
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button className="btn btn-primary" onClick={() => loadArticles()}>
+            Retry
+          </button>
+          {selectedSourceId && error === 'Source not found' && (
+            <button className="btn" onClick={() => handleSourceChange(null)}>
+              Clear filter
+            </button>
+          )}
+        </div>
       </div>
     );
   }
